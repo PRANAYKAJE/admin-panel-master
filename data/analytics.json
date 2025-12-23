@@ -1,0 +1,64 @@
+{
+  "dailyGMV": {
+    "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "data": [12000, 15000, 11000, 18000, 20000, 25000, 22000]
+  },
+  "weeklyGMV": {
+    "labels": ["Week 1", "Week 2", "Week 3", "Week 4"],
+    "data": [85000, 92000, 88000, 95000]
+  },
+  "ordersByStore": {
+    "labels": ["Fresh Mart", "Daily Needs", "Kirana Corner", "Super Store", "City Mart", "Quick Mart"],
+    "data": [420, 380, 350, 290, 260, 240]
+  },
+  "orderStatus": {
+    "labels": ["Delivered", "In Preparation", "Out for Delivery", "New", "Cancelled"],
+    "data": [65, 15, 10, 7, 3]
+  },
+  "deliveryPerformance": {
+    "labels": ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    "datasets": [
+      {
+        "label": "On Time",
+        "data": [92, 94, 90, 95, 93, 91, 89]
+      },
+      {
+        "label": "Delayed",
+        "data": [6, 4, 7, 3, 5, 7, 9]
+      },
+      {
+        "label": "Cancelled",
+        "data": [2, 2, 3, 2, 2, 2, 2]
+      }
+    ]
+  },
+  "financialReports": [
+    { 
+      "reportType": "Daily Sales", 
+      "period": "Today", 
+      "revenue": "₹45,680", 
+      "orders": 324, 
+      "avgValue": "₹141", 
+      "commission": "₹4,568", 
+      "payouts": "₹32,450" 
+    },
+    { 
+      "reportType": "Weekly Sales", 
+      "period": "This Week", 
+      "revenue": "₹2,85,420", 
+      "orders": 1856, 
+      "avgValue": "₹154", 
+      "commission": "₹28,542", 
+      "payouts": "₹2,05,680" 
+    },
+    { 
+      "reportType": "Monthly Sales", 
+      "period": "This Month", 
+      "revenue": "₹12,48,560", 
+      "orders": 7842, 
+      "avgValue": "₹159", 
+      "commission": "₹1,24,856", 
+      "payouts": "₹8,96,420" 
+    }
+  ]
+}

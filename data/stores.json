@@ -1,0 +1,42 @@
+[
+  {
+    "id": "STR-001",
+    "name": "Fresh Mart",
+    "owner": "Rajesh Kumar",
+    "rating": 4.5,
+    "totalSales": 150000,
+    "joinedDate": "2023-01-15",
+    "location": "Andheri East, Mumbai",
+    "status": "Active"
+  },
+  {
+    "id": "STR-002",
+    "name": "Daily Needs",
+    "owner": "Priya Singh",
+    "rating": 4.2,
+    "totalSales": 85000,
+    "joinedDate": "2023-03-10",
+    "location": "Bandra West, Mumbai",
+    "status": "Active"
+  },
+  {
+    "id": "STR-003",
+    "name": "Kirana Corner",
+    "owner": "Amit Patel",
+    "rating": 4.8,
+    "totalSales": 210000,
+    "joinedDate": "2022-11-20",
+    "location": "Powai, Mumbai",
+    "status": "Active"
+  },
+  {
+    "id": "STR-004",
+    "name": "Super Store",
+    "owner": "Neha Sharma",
+    "rating": 4.3,
+    "totalSales": 120000,
+    "joinedDate": "2023-05-05",
+    "location": "Malad, Mumbai",
+    "status": "Inactive"
+  }
+]

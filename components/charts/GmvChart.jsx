@@ -5,7 +5,7 @@ import { useTheme } from '../../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
-const GmvChart = () => {
+const GmvChart = ({ data }) => {
   const { theme } = useTheme();
   const [chartData, setChartData] = useState({
     labels: [],
@@ -16,12 +16,15 @@ const GmvChart = () => {
   useEffect(() => {
     const isDark = theme === 'dark';
     
+    const labels = data?.labels || ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const values = data?.data || [0, 0, 0, 0, 0, 0, 0];
+
     setChartData({
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+      labels: labels,
       datasets: [
         {
           label: 'GMV (₹)',
-          data: [32000, 35000, 33000, 38000, 42000, 45000, 48000],
+          data: values,
           borderColor: isDark ? '#39D377' : '#00A86B',
           backgroundColor: isDark ? 'rgba(57, 211, 119, 0.1)' : 'rgba(0, 168, 107, 0.1)',
           tension: 0.4,
@@ -61,7 +64,7 @@ const GmvChart = () => {
         },
       },
     });
-  }, [theme]);
+  }, [theme, data]);
 
   return <Line data={chartData} options={chartOptions} />;
 };

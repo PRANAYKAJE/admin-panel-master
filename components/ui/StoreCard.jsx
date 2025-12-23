@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPlus, faEye } from '@fortawesome/free-solid-svg-icons';
 
-const StoreCard = ({ store }) => {
+const StoreCard = ({ store, onView, onAddOrder }) => {
   const getStatusClass = () => {
     switch (store.status) {
       case 'Active': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
@@ -37,8 +37,8 @@ const StoreCard = ({ store }) => {
           <div className="font-semibold text-gray-900 dark:text-white">{store.acceptanceRate}</div>
         </div>
         <div className="text-center">
-          <div className="text-sm text-gray-500 dark:text-gray-400">Avg. Prep Time</div>
-          <div className="font-semibold text-gray-900 dark:text-white">{store.avgPrepTime}</div>
+          <div className="text-sm text-gray-500 dark:text-gray-400">Total Sales</div>
+          <div className="font-semibold text-gray-900 dark:text-white">₹{store.totalSales?.toLocaleString()}</div>
         </div>
         <div className="text-center">
           <div className="text-sm text-gray-500 dark:text-gray-400">Rating</div>
@@ -47,11 +47,17 @@ const StoreCard = ({ store }) => {
       </div>
       
       <div className="flex space-x-3">
-        <button className="btn btn-outline flex-1">
+        <button 
+            className="btn btn-outline flex-1"
+            onClick={() => onView && onView(store)}
+        >
           <FontAwesomeIcon icon={faEye} className="mr-2" />
           View
         </button>
-        <button className="btn btn-primary flex-1">
+        <button 
+            className="btn btn-primary flex-1"
+            onClick={() => onAddOrder && onAddOrder(store)}
+        >
           <FontAwesomeIcon icon={faPlus} className="mr-2" />
           Add Order
         </button>

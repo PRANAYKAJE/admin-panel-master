@@ -1,0 +1,65 @@
+[
+  {
+    "id": "ORD-1001",
+    "amount": 1250,
+    "storeName": "Fresh Mart",
+    "customerName": "Ramesh Gupta",
+    "status": "Delivered",
+    "date": "2023-10-25T10:30:00Z",
+    "items": ["Rice 5kg", "Sugar 1kg", "Oil 1L"]
+  },
+  {
+    "id": "ORD-1002",
+    "amount": 450,
+    "storeName": "Daily Needs",
+    "customerName": "Sita Verma",
+    "status": "Pending",
+    "date": "2023-10-26T11:15:00Z",
+    "items": ["Milk 1L", "Bread", "Eggs 12"]
+  },
+  {
+    "id": "ORD-1003",
+    "amount": 2100,
+    "storeName": "Kirana Corner",
+    "customerName": "Amit Singh",
+    "status": "Cancelled",
+    "date": "2023-10-24T09:00:00Z",
+    "items": ["Atta 10kg", "Dal 2kg", "Spices"]
+  },
+  {
+    "id": "ORD-1004",
+    "amount": 890,
+    "storeName": "Fresh Mart",
+    "customerName": "Priya Sharma",
+    "status": "In Preparation",
+    "date": "2023-10-26T12:00:00Z",
+    "items": ["Snacks", "Juice 2L"]
+  },
+  {
+    "id": "ORD-1005",
+    "amount": 3400,
+    "storeName": "Super Store",
+    "customerName": "Vikram Malhotra",
+    "status": "Delivered",
+    "date": "2023-10-23T14:45:00Z",
+    "items": ["Ghee 1kg", "Dry Fruits", "Tea 500g"]
+  },
+  {
+    "id": "ORD-1006",
+    "amount": 2400,
+    "storeName": "Super Store",
+    "customerName": "Vikram Malhotra",
+    "status": "Delivered",
+    "date": "2023-10-27T14:45:00Z",
+    "items": ["Ghee 1/2 kg", "Fruits", "Coffee 500g"]
+  },
+  {
+    "id": "ORD-1007",
+    "amount": 2300,
+    "storeName": "Daily Needs",
+    "customerName": "Vikram Malhotra",
+    "status": "Delivered",
+    "date": "2023-10-27T14:45:00Z",
+    "items": ["sugar 1/2 kg", "Maggiee", "Coffee 500g"]
+  }
+]

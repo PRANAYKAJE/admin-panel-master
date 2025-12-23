@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-const DataTable = ({ title, columns, data, filters, onFilterChange, onAddNew }) => {
+const DataTable = ({ title, columns, data, filters, onFilterChange, onAddNew, onRowAction }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -69,18 +69,30 @@ const DataTable = ({ title, columns, data, filters, onFilterChange, onAddNew }) 
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {currentItems.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-750">
+              <tr key={row.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 {columns.map((column) => (
                   <td key={`${row.id}-${column}`} className="text-gray-900 dark:text-gray-300">
                     {column === 'Actions' ? (
                       <div className="flex space-x-2">
-                        <button className="text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200" title="View">
+                        <button 
+                          className="text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200" 
+                          title="View"
+                          onClick={() => onRowAction && onRowAction('view', row)}
+                        >
                           <i className="fas fa-eye"></i>
                         </button>
-                        <button className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200" title="Edit">
+                        <button 
+                          className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200" 
+                          title="Edit"
+                          onClick={() => onRowAction && onRowAction('edit', row)}
+                        >
                           <i className="fas fa-edit"></i>
                         </button>
-                        <button className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200" title="Delete">
+                        <button 
+                          className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors duration-200" 
+                          title="Delete"
+                          onClick={() => onRowAction && onRowAction('delete', row)}
+                        >
                           <i className="fas fa-trash"></i>
                         </button>
                       </div>

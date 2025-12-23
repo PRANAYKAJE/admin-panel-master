@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Layout from '../layout/Layout';
+import { api } from '../../services/api';
+import { toast } from 'react-hot-toast';
 
 const Settings = () => {
   // Notification Compose State
@@ -9,6 +11,11 @@ const Settings = () => {
     title: '',
     message: ''
   });
+
+  // User Search State
+  const [userSearchQuery, setUserSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   // User Management State
   const [userManagement, setUserManagement] = useState({
@@ -37,11 +44,28 @@ const Settings = () => {
 
   // Notification Toggle State
   const [notificationToggles, setNotificationToggles] = useState({
-    newOrder: 'Enabled',
-    deliveryAlerts: 'Enabled',
-    paymentNotifications: 'Enabled',
-    systemAlerts: 'Enabled'
+    newOrder: true,
+    deliveryAlerts: true,
+    paymentNotifications: true,
+    systemAlerts: true,
+    emailAlerts: true,
+    smsNotifications: false
   });
+
+  useEffect(() => {
+    loadSettings();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settings = await api.getSettings();
+      if (settings && Object.keys(settings).length > 0) {
+        setNotificationToggles(prev => ({ ...prev, ...settings }));
+      }
+    } catch (error) {
+      console.error("Failed to load settings", error);
+    }
+  };
 
   // Handlers
   const handleChange = (setState, name, value) => {
@@ -51,37 +75,97 @@ const Settings = () => {
     }));
   };
 
-  const handleSendNotification = () => {
-    console.log('Sending notification:', composeNotification);
-    alert(`Notification sent: "${composeNotification.title}" to ${composeNotification.recipientType}`);
-    // Reset form
-    setComposeNotification({
-      recipientType: 'all',
-      notificationType: 'info',
-      title: '',
-      message: ''
-    });
+  const handleUserSearch = async (query) => {
+    setUserSearchQuery(query);
+    if (query.length > 1) {
+      try {
+        const results = await api.getUsers(query);
+        setSearchResults(results);
+      } catch (error) {
+        console.error("User search failed", error);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
+
+  const selectUser = (user) => {
+    setSelectedUser(user);
+    setUserSearchQuery(user.name);
+    setSearchResults([]);
+  };
+
+  const handleSendNotification = async () => {
+    if (!composeNotification.title || !composeNotification.message) {
+      toast.error("Please provide title and message");
+      return;
+    }
+    
+    if (composeNotification.recipientType === 'specific' && !selectedUser) {
+      toast.error("Please select a user");
+      return;
+    }
+
+    try {
+      await api.sendNotification({
+        ...composeNotification,
+        targetUser: selectedUser ? selectedUser.id : null,
+        targetName: selectedUser ? selectedUser.name : composeNotification.recipientType
+      });
+      
+      toast.success(`Notification sent to ${composeNotification.recipientType === 'specific' ? selectedUser.name : composeNotification.recipientType}`);
+      
+      // Reset form
+      setComposeNotification({
+        recipientType: 'all',
+        notificationType: 'info',
+        title: '',
+        message: ''
+      });
+      setSelectedUser(null);
+      setUserSearchQuery('');
+    } catch (error) {
+      toast.error("Failed to send notification");
+    }
   };
 
   const handleSaveUserManagement = () => {
     console.log('Saving User Management settings:', userManagement);
-    alert('User Management settings saved!');
+    toast.success('User Management settings saved!');
   };
 
   const handleSaveDeliveryConfig = () => {
     console.log('Saving Delivery Configuration:', deliveryConfig);
-    alert('Delivery Configuration saved!');
+    toast.success('Delivery Configuration saved!');
   };
 
   const handleCreateCoupon = () => {
     console.log('Creating Coupon:', couponConfig);
-    alert(`Coupon ${couponConfig.couponCode} created!`);
+    toast.success(`Coupon ${couponConfig.couponCode} created!`);
   };
 
-  const handleSaveNotificationToggles = () => {
-    console.log('Saving Notification Toggles:', notificationToggles);
-    alert('Notification Toggles saved!');
+  const handleSaveNotificationToggles = async () => {
+    try {
+      await api.updateSettings(notificationToggles);
+      toast.success('Notification Settings saved!');
+    } catch (error) {
+      toast.error("Failed to save settings");
+    }
   };
+
+  const ToggleSwitch = ({ label, checked, onChange }) => (
+    <div className="flex items-center justify-between py-3 border-b border-gray-100 dark:border-gray-700 last:border-0">
+      <span className="text-gray-700 dark:text-gray-300 font-medium">{label}</span>
+      <button 
+        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 ${checked ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-600'}`}
+        onClick={() => onChange(!checked)}
+      >
+        <span
+          className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${checked ? 'translate-x-6' : 'translate-x-1'}`}
+        />
+      </button>
+    </div>
+  );
 
   return (
     <Layout>
@@ -96,7 +180,7 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Recipient Type</label>
                 <select 
-                  className="input"
+                  className="input w-full"
                   value={composeNotification.recipientType}
                   onChange={(e) => handleChange(setComposeNotification, 'recipientType', e.target.value)}
                 >
@@ -104,13 +188,13 @@ const Settings = () => {
                   <option value="stores">All Stores</option>
                   <option value="partners">All Delivery Partners</option>
                   <option value="customers">All Customers</option>
-                  <option value="specific">Specific Users</option>
+                  <option value="specific">Specific User</option>
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notification Type</label>
                 <select 
-                  className="input"
+                  className="input w-full"
                   value={composeNotification.notificationType}
                   onChange={(e) => handleChange(setComposeNotification, 'notificationType', e.target.value)}
                 >
@@ -121,12 +205,38 @@ const Settings = () => {
                 </select>
               </div>
             </div>
+
+            {composeNotification.recipientType === 'specific' && (
+              <div className="relative">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Search User</label>
+                <input 
+                  type="text" 
+                  className="input w-full"
+                  placeholder="Type name to search..."
+                  value={userSearchQuery}
+                  onChange={(e) => handleUserSearch(e.target.value)}
+                />
+                {searchResults.length > 0 && (
+                  <div className="absolute z-10 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md shadow-lg mt-1 max-h-48 overflow-y-auto">
+                    {searchResults.map(user => (
+                      <div 
+                        key={user.id}
+                        className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer text-gray-800 dark:text-gray-200"
+                        onClick={() => selectUser(user)}
+                      >
+                        {user.name} <span className="text-xs text-gray-500">({user.email})</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
             
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
               <input 
                 type="text" 
-                className="input"
+                className="input w-full"
                 placeholder="Enter notification title"
                 value={composeNotification.title}
                 onChange={(e) => handleChange(setComposeNotification, 'title', e.target.value)}
@@ -136,7 +246,7 @@ const Settings = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Message</label>
               <textarea 
-                className="input"
+                className="input w-full"
                 rows={4}
                 placeholder="Enter your notification message here..."
                 value={composeNotification.message}
@@ -145,11 +255,57 @@ const Settings = () => {
             </div>
             
             <div className="flex justify-end space-x-3">
-              <button className="btn btn-secondary">Cancel</button>
+              <button 
+                className="btn btn-secondary"
+                onClick={() => setComposeNotification({recipientType: 'all', notificationType: 'info', title: '', message: ''})}
+              >
+                Cancel
+              </button>
               <button className="btn btn-primary" onClick={handleSendNotification}>
                 Send Notification
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* Notification Settings Toggles Section */}
+        <div className="card p-6">
+          <div className="flex justify-between items-center mb-4">
+             <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Preferences</h2>
+             <button className="btn btn-sm btn-primary" onClick={handleSaveNotificationToggles}>Save Changes</button>
+          </div>
+          
+          <div className="space-y-1">
+            <ToggleSwitch 
+              label="New Order Notifications" 
+              checked={notificationToggles.newOrder} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, newOrder: val}))} 
+            />
+            <ToggleSwitch 
+              label="Delivery Alerts" 
+              checked={notificationToggles.deliveryAlerts} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, deliveryAlerts: val}))} 
+            />
+            <ToggleSwitch 
+              label="Payment Notifications" 
+              checked={notificationToggles.paymentNotifications} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, paymentNotifications: val}))} 
+            />
+            <ToggleSwitch 
+              label="System Alerts" 
+              checked={notificationToggles.systemAlerts} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, systemAlerts: val}))} 
+            />
+            <ToggleSwitch 
+              label="Email Alerts" 
+              checked={notificationToggles.emailAlerts} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, emailAlerts: val}))} 
+            />
+            <ToggleSwitch 
+              label="SMS Notifications" 
+              checked={notificationToggles.smsNotifications} 
+              onChange={(val) => setNotificationToggles(prev => ({...prev, smsNotifications: val}))} 
+            />
           </div>
         </div>
 
@@ -161,7 +317,7 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">User Role</label>
                 <select 
-                  className="input"
+                  className="input w-full"
                   value={userManagement.role}
                   onChange={(e) => handleChange(setUserManagement, 'role', e.target.value)}
                 >
@@ -173,7 +329,7 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Permissions</label>
                 <select 
-                  className="input"
+                  className="input w-full"
                   value={userManagement.permissions}
                   onChange={(e) => handleChange(setUserManagement, 'permissions', e.target.value)}
                 >
@@ -188,7 +344,7 @@ const Settings = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
               <input 
                 type="email" 
-                className="input"
+                className="input w-full"
                 placeholder="user@example.com"
                 value={userManagement.email}
                 onChange={(e) => handleChange(setUserManagement, 'email', e.target.value)}
@@ -199,7 +355,7 @@ const Settings = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
               <input 
                 type="password" 
-                className="input"
+                className="input w-full"
                 placeholder="••••••••"
                 value={userManagement.password}
                 onChange={(e) => handleChange(setUserManagement, 'password', e.target.value)}
@@ -222,7 +378,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Base Delivery Fee</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={deliveryConfig.baseFee}
                   onChange={(e) => handleChange(setDeliveryConfig, 'baseFee', e.target.value)}
@@ -232,7 +388,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Fee per Kilometer</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={deliveryConfig.feePerKm}
                   onChange={(e) => handleChange(setDeliveryConfig, 'feePerKm', e.target.value)}
@@ -245,7 +401,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Order Value</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={deliveryConfig.minOrderValue}
                   onChange={(e) => handleChange(setDeliveryConfig, 'minOrderValue', e.target.value)}
@@ -255,7 +411,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Free Delivery Threshold</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={deliveryConfig.freeDeliveryThreshold}
                   onChange={(e) => handleChange(setDeliveryConfig, 'freeDeliveryThreshold', e.target.value)}
@@ -278,7 +434,7 @@ const Settings = () => {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Coupon Code</label>
               <input 
                 type="text" 
-                className="input"
+                className="input w-full"
                 placeholder="Enter coupon code"
                 value={couponConfig.couponCode}
                 onChange={(e) => handleChange(setCouponConfig, 'couponCode', e.target.value)}
@@ -289,7 +445,7 @@ const Settings = () => {
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount Type</label>
                 <select 
-                  className="input"
+                  className="input w-full"
                   value={couponConfig.discountType}
                   onChange={(e) => handleChange(setCouponConfig, 'discountType', e.target.value)}
                 >
@@ -301,7 +457,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Discount Value</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={couponConfig.discountValue}
                   onChange={(e) => handleChange(setCouponConfig, 'discountValue', e.target.value)}
@@ -314,7 +470,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minimum Order Value</label>
                 <input 
                   type="number" 
-                  className="input"
+                  className="input w-full"
                   placeholder="0"
                   value={couponConfig.minOrderValue}
                   onChange={(e) => handleChange(setCouponConfig, 'minOrderValue', e.target.value)}
@@ -324,7 +480,7 @@ const Settings = () => {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Expiry Date</label>
                 <input 
                   type="date" 
-                  className="input"
+                  className="input w-full"
                   value={couponConfig.expiryDate}
                   onChange={(e) => handleChange(setCouponConfig, 'expiryDate', e.target.value)}
                 />
@@ -334,65 +490,6 @@ const Settings = () => {
             <div className="flex justify-end space-x-3">
               <button className="btn btn-secondary">Cancel</button>
               <button className="btn btn-primary" onClick={handleCreateCoupon}>Create Coupon</button>
-            </div>
-          </div>
-        </div>
-
-        {/* Notification Settings Toggles Section */}
-        <div className="card p-6">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Notification Settings</h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Order Notifications</label>
-              <select 
-                className="input"
-                value={notificationToggles.newOrder}
-                onChange={(e) => handleChange(setNotificationToggles, 'newOrder', e.target.value)}
-              >
-                <option>Enabled</option>
-                <option>Disabled</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Delivery Alerts</label>
-              <select 
-                className="input"
-                value={notificationToggles.deliveryAlerts}
-                onChange={(e) => handleChange(setNotificationToggles, 'deliveryAlerts', e.target.value)}
-              >
-                <option>Enabled</option>
-                <option>Disabled</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Notifications</label>
-              <select 
-                className="input"
-                value={notificationToggles.paymentNotifications}
-                onChange={(e) => handleChange(setNotificationToggles, 'paymentNotifications', e.target.value)}
-              >
-                <option>Enabled</option>
-                <option>Disabled</option>
-              </select>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">System Alerts</label>
-              <select 
-                className="input"
-                value={notificationToggles.systemAlerts}
-                onChange={(e) => handleChange(setNotificationToggles, 'systemAlerts', e.target.value)}
-              >
-                <option>Enabled</option>
-                <option>Disabled</option>
-              </select>
-            </div>
-            
-            <div className="flex justify-end space-x-3">
-              <button className="btn btn-secondary">Cancel</button>
-              <button className="btn btn-primary" onClick={handleSaveNotificationToggles}>Save Changes</button>
             </div>
           </div>
         </div>

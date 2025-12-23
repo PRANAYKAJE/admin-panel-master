@@ -1,5 +1,7 @@
-import Head from 'next/head'; // Import this
+import Head from 'next/head';
 import { ThemeProvider } from '../context/ThemeContext';
+import { GlobalProvider } from '../context/GlobalContext';
+import { Toaster } from 'react-hot-toast';
 import '../styles/globals.css';
 
 function MyApp({ Component, pageProps }) {
@@ -12,9 +14,12 @@ function MyApp({ Component, pageProps }) {
         <meta name="theme-color" content="#000000" />
         <meta name="description" content="Kirana Hub Admin Panel" />
       </Head>
-      <ThemeProvider>
-        <Component {...pageProps} />
-      </ThemeProvider>
+      <GlobalProvider>
+        <ThemeProvider>
+          <Component {...pageProps} />
+          <Toaster position="top-right" />
+        </ThemeProvider>
+      </GlobalProvider>
     </>
   );
 }

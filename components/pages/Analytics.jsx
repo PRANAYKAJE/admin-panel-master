@@ -1,51 +1,69 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Layout from '../layout/Layout';
 import AnalyticsCharts from '../charts/AnalyticsCharts';
 import { useTheme } from '../../context/ThemeContext';
 import { Bar, Pie } from 'react-chartjs-2';
+import {api} from '../../services/api';
+import Modal from '../ui/Modal';
+import { toast } from 'react-hot-toast';
 
 const Analytics = () => {
   const [activePeriod, setActivePeriod] = useState('month');
   const [activeReportPeriod, setActiveReportPeriod] = useState('This Month');
+  const [analyticsData, setAnalyticsData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [modalState, setModalState] = useState({ open: false, mode: 'view', data: null });
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const data = await api.getAnalytics();
+        setAnalyticsData(data);
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+        toast.error('Failed to load analytics data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const handlePeriodChange = (period) => {
     setActivePeriod(period);
-    console.log(`Changing analytics period to: ${period}`);
+    toast.success(`Period changed to: ${period}`);
   };
 
-  const financialReportsData = [
-    { 
-      reportType: 'Daily Sales', 
-      period: 'Today', 
-      revenue: '₹45,680', 
-      orders: 324, 
-      avgValue: '₹141', 
-      commission: '₹4,568', 
-      payouts: '₹32,450' 
-    },
-    { 
-      reportType: 'Weekly Sales', 
-      period: 'This Week', 
-      revenue: '₹2,85,420', 
-      orders: 1856, 
-      avgValue: '₹154', 
-      commission: '₹28,542', 
-      payouts: '₹2,05,680' 
-    },
-    { 
-      reportType: 'Monthly Sales', 
-      period: 'This Month', 
-      revenue: '₹12,48,560', 
-      orders: 7842, 
-      avgValue: '₹159', 
-      commission: '₹1,24,856', 
-      payouts: '₹8,96,420' 
-    },
-  ];
+  const handleExport = (reportType) => {
+    toast.success(`Exporting ${reportType || 'report'}...`);
+    // Simulate export delay
+    setTimeout(() => {
+      toast.success('Export completed successfully');
+    }, 1500);
+  };
 
-  const chartData = AnalyticsCharts();
+  const handleViewReport = (report) => {
+    setModalState({
+      open: true,
+      mode: 'view',
+      data: report
+    });
+  };
+
+  const chartData = AnalyticsCharts(analyticsData);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout>
@@ -76,28 +94,30 @@ const Analytics = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="card p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Orders by Store</h3>
-            <div className="h-80">
-              <Bar data={chartData.ordersByStoreData} options={chartData.ordersByStoreOptions} />
+        {analyticsData && chartData.ordersByStoreData && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="card p-6 lg:col-span-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Orders by Store</h3>
+              <div className="h-80">
+                <Bar data={chartData.ordersByStoreData} options={chartData.ordersByStoreOptions} />
+              </div>
             </div>
-          </div>
 
-          <div className="card p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Status Distribution</h3>
-            <div className="h-80">
-              <Pie data={chartData.orderStatusData} options={chartData.orderStatusOptions} />
+            <div className="card p-6 lg:col-span-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Order Status Distribution</h3>
+              <div className="h-80">
+                <Pie data={chartData.orderStatusData} options={chartData.orderStatusOptions} />
+              </div>
             </div>
-          </div>
 
-          <div className="card p-6 lg:col-span-1">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Performance</h3>
-            <div className="h-80">
-              <Bar data={chartData.deliveryPerformanceData} options={chartData.deliveryPerformanceOptions} />
+            <div className="card p-6 lg:col-span-1">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Delivery Performance</h3>
+              <div className="h-80">
+                <Bar data={chartData.deliveryPerformanceData} options={chartData.deliveryPerformanceOptions} />
+              </div>
             </div>
           </div>
-        </div>
+        )}
         
         {/* Financial Reports Table Section */}
         <div className="card overflow-hidden">
@@ -116,7 +136,7 @@ const Analytics = () => {
               
               <button 
                 className="btn btn-primary w-full md:w-auto"
-                onClick={() => console.log('Exporting report...')}
+                onClick={() => handleExport('Full Report')}
               >
                 <i className="fas fa-download mr-2"></i>
                 Export Report
@@ -139,7 +159,7 @@ const Analytics = () => {
                 </tr>
               </thead>
               <tbody>
-                {financialReportsData.map((report, index) => (
+                {analyticsData?.financialReports?.map((report, index) => (
                   <tr key={report.reportType} 
                     className={index > 0 ? 'bg-gray-50 dark:bg-gray-800/50' : ''}
                   >
@@ -154,14 +174,14 @@ const Analytics = () => {
                       <div className="flex space-x-2">
                         <button 
                           className="text-gray-500 hover:text-green-600 dark:hover:text-green-400 transition-colors duration-200"
-                          onClick={() => console.log(`Viewing ${report.reportType}`)}
+                          onClick={() => handleViewReport(report)}
                           title="View Details"
                         >
                           <i className="fas fa-eye"></i>
                         </button>
                         <button 
                           className="text-gray-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200"
-                          onClick={() => console.log(`Downloading ${report.reportType}`)}
+                          onClick={() => handleExport(report.reportType)}
                           title="Download Report"
                         >
                           <i className="fas fa-download"></i>
@@ -175,6 +195,43 @@ const Analytics = () => {
           </div>
         </div>
       </div>
+
+      <Modal
+        isOpen={modalState.open}
+        onClose={() => setModalState({ ...modalState, open: false })}
+        title={`Report Details: ${modalState.data?.reportType || ''}`}
+      >
+        {modalState.data && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Period</label>
+                <p className="font-medium">{modalState.data.period}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Revenue</label>
+                <p className="font-medium text-green-600">{modalState.data.revenue}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Orders</label>
+                <p className="font-medium">{modalState.data.orders}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Avg Value</label>
+                <p className="font-medium">{modalState.data.avgValue}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Commission</label>
+                <p className="font-medium">{modalState.data.commission}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500 dark:text-gray-400">Payouts</label>
+                <p className="font-medium">{modalState.data.payouts}</p>
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
     </Layout>
   );
 };

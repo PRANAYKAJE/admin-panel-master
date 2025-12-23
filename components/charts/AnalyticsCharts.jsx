@@ -5,18 +5,20 @@ import { useTheme } from '../../context/ThemeContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement);
 
-const AnalyticsCharts = () => {
+const AnalyticsCharts = (analyticsData) => {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
 
   const chartData = useMemo(() => {
+    if (!analyticsData) return {};
+
     // Orders by Store Chart Data
     const ordersByStoreData = {
-      labels: ['Fresh Mart', 'Daily Needs', 'Kirana Corner', 'Super Store', 'City Mart', 'Quick Mart'],
+      labels: analyticsData.ordersByStore?.labels || [],
       datasets: [
         {
           label: 'Orders',
-          data: [420, 380, 350, 290, 260, 240],
+          data: analyticsData.ordersByStore?.data || [],
           backgroundColor: isDark ? '#39D377' : '#00A86B',
         },
       ],
@@ -51,10 +53,10 @@ const AnalyticsCharts = () => {
 
     // Order Status Distribution Chart Data
     const orderStatusData = {
-      labels: ['Delivered', 'In Preparation', 'Out for Delivery', 'New', 'Cancelled'],
+      labels: analyticsData.orderStatus?.labels || [],
       datasets: [
         {
-          data: [65, 15, 10, 7, 3],
+          data: analyticsData.orderStatus?.data || [],
           backgroundColor: [
             isDark ? '#1ED760' : '#1DB954',
             isDark ? '#FFB84C' : '#FF7A00',
@@ -96,24 +98,15 @@ const AnalyticsCharts = () => {
 
     // Delivery Performance Chart Data
     const deliveryPerformanceData = {
-      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-      datasets: [
-        {
-          label: 'On Time',
-          data: [92, 94, 90, 95, 93, 91, 89],
-          backgroundColor: isDark ? '#1ED760' : '#1DB954',
-        },
-        {
-          label: 'Delayed',
-          data: [6, 4, 7, 3, 5, 7, 9],
-          backgroundColor: isDark ? '#FF6666' : '#FF4D4D',
-        },
-        {
-          label: 'Cancelled',
-          data: [2, 2, 3, 2, 2, 2, 2],
-          backgroundColor: isDark ? '#FFB84C' : '#FF7A00',
-        },
-      ],
+      labels: analyticsData.deliveryPerformance?.labels || [],
+      datasets: (analyticsData.deliveryPerformance?.datasets || []).map((dataset, index) => ({
+        ...dataset,
+        backgroundColor: index === 0 
+          ? (isDark ? '#1ED760' : '#1DB954') 
+          : index === 1 
+            ? (isDark ? '#FF6666' : '#FF4D4D') 
+            : (isDark ? '#FFB84C' : '#FF7A00'),
+      })),
     };
 
     const deliveryPerformanceOptions = {
@@ -163,7 +156,7 @@ const AnalyticsCharts = () => {
       deliveryPerformanceData,
       deliveryPerformanceOptions
     };
-  }, [isDark]);
+  }, [isDark, analyticsData]);
 
   return chartData;
 };
